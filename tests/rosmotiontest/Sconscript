@@ -1,0 +1,84 @@
+# Copyright 2019 Shanghai Fangling Computer Software Co. Ltd. All rights reserved.
+# Author: Miaocheng Yu (miaochengyu@fLcnc.com)
+#
+# Change Logs:
+# Date           Author           Notes
+# 2019-08-11     Miaocheng Yu     SConscript file for test project.
+
+import compiler_config
+import os
+
+# this is current project name
+_target_name = "RosMotionTest"
+
+# [(lib_path, [lib_name]),..], only for type is "exe"
+# example:  _depend_lib = [('libalpha/src', ['Add']),('libbeta/src', ['Multiply']),]
+_depend_libs= []
+
+# Add third party library
+# example: _depends = ["gtest", "gmock"]
+_depends = []
+
+_define_macro = """
+"""
+
+_src = """
+    main.cpp
+"""
+
+# type = ["exe", "static", "shared"]
+_pro_type = "exe"
+
+def _get_src_files():
+    return _src.split()
+
+def _get_depend_libs():
+    return _depend_libs
+
+def _get_pro_type():
+    return _pro_type
+
+def _get_target_name():
+    return _target_name
+
+def _get_defind_macro():
+    return list(map("-D{}".format, _define_macro.split()))
+
+Import('env')
+
+# Clone an environment so this project is seprate to others.
+env = env.Clone()
+
+TARGET = _get_target_name()
+if env['debug']:
+    TARGET += 'd'
+
+compiler_config.library_depends_config(env, _get_depend_libs())
+env.PrependUnique(LIBS = _depends)
+
+# The out path is relative to folder contain this file.
+# For example, '../lib' means 'add/../lib'
+out_path = {
+        "shared": compiler_config.config_shared_library(env, TARGET),
+        "static": compiler_config.config_library(env, TARGET),
+        "exe": compiler_config.config_exe(env, TARGET)
+        }.get(_get_pro_type())
+
+env.Append(CCFLAGS = _get_defind_macro())
+objs = env.Object(_get_src_files())
+
+rtn = {
+        "shared": env.SharedLibrary(os.path.join(out_path, TARGET), objs),
+        "static": env.StaticLibrary(os.path.join(out_path, TARGET), objs),
+        "exe": env.Program(os.path.join(out_path, TARGET), objs)
+        }.get(_get_pro_type())
+
+# Execute test.
+test_app = rtn[0].abspath
+# Set test as source, so the command will always build.
+exe = env.Command(target = None,
+                  source = rtn,
+                  action = ['@echo ******** %s ********' % test_app, test_app])
+
+rtn.extend(exe)
+Return('rtn')

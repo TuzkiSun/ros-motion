@@ -1,0 +1,44 @@
+# Copyright 2019 Shanghai Fangling Computer Software Co. Ltd. All rights reserved.
+# Author: Miaocheng Yu (miaochengyu@fLcnc.com)
+#
+# Change Logs:
+# Date           Author           Notes
+# 2019-08-11     Miaocheng Yu     SConscript file for tests projects.
+
+import compiler_config
+import os
+import utility
+
+Import('env')
+
+# Clone an environment so this project is seprate to others.
+env = env.Clone()
+
+# Add 'tests' and 'src' folder path to include path.
+compiler_config.config_base_tests_path(env)
+compiler_config.config_gtest(env)
+
+# Add other project folder here
+# Warning: Do NOT fetch sub folder automatically! Otherwise variant dir
+#          can not copy source file to build folder
+subdirs = """
+            rosmotiontest
+          """
+
+list = subdirs.split()
+if utility.is_msvc(env):
+  env.Append(CCFLAGS = "/std:c++17");
+else:
+  env.Append(CCFLAGS = "-std=c++17");
+
+build_nodes = []
+for d in list:
+    target = SConscript(os.path.join(d, 'SConscript'), exports = 'env')
+    if target:
+        build_nodes.extend(target)
+
+env.Alias('test', build_nodes)
+
+# build_nodes depends on config files. So rebuild will perform after
+# config files in utility folder changes.
+env.Depends(build_nodes, utility.get_tools_nodes(env))

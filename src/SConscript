@@ -1,0 +1,40 @@
+# Copyright 2019 Shanghai Fangling Computer Software Co. Ltd. All rights reserved.
+# Author: Miaocheng Yu (miaochengyu@fLcnc.com)
+#
+# Change Logs:
+# Date           Author           Notes
+# 2019-08-04     Miaocheng Yu     SConscript file for libalpha projects.
+
+import compiler_config
+import os
+import utility
+
+Import('env')
+
+# Add 'src' folder path to include path.
+compiler_config.config_base_src_path(env)
+
+# Clone an environment so this project is seprate to others.
+env = env.Clone()
+
+# Add other project folder here
+# Warning: Do NOT fetch sub folder automatically! Otherwise variant dir
+#          can not copy source file to build folder
+subdirs = """
+    rosmotion
+"""
+
+list = subdirs.split()
+
+build_nodes = []
+for d in list:
+    target = SConscript(os.path.join(d, 'SConscript'), exports = 'env')
+    if target:
+        build_nodes.extend(target)
+
+env.Alias('build', build_nodes)
+env.Default(build_nodes)
+
+# build_nodes depends on config files. So rebuild will perform after
+# config files in utility folder changes.
+env.Depends(build_nodes, utility.get_tools_nodes(env))

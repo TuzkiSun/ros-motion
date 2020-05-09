@@ -1,0 +1,23 @@
+# Copyright 2019 Shanghai Fangling Software Co., Ltd. All Rights Reserved.
+# Author: miaochengyu@fLcnc.com (Miaocheng Yu)
+
+/depends
+/essentials
+/build
+/install
+/output
+/lib
+/tmp
+/bin
+/export
+/.vscode
+*.pyc
+.sconsign.dblite
+*.exe
+*.obj
+*.o
+*.a
+*.so
+*.lib
+*.dll
+/VsProject
